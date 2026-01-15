@@ -1,0 +1,23 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated evidence
+audit-evidence/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log

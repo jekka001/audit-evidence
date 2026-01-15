@@ -1,0 +1,58 @@
+name: 'GitHub SOC2 Audit Evidence Exporter'
+description: 'Generate auditor-ready SOC2 evidence PDFs from your GitHub organization'
+author: 'jekka001'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  standard:
+    description: 'Compliance standard (currently only SOC2 supported)'
+    required: false
+    default: 'SOC2'
+
+  org:
+    description: 'GitHub organization name'
+    required: true
+
+  repo:
+    description: 'GitHub repository name (optional, for repo-level checks)'
+    required: false
+
+  format:
+    description: 'Output format: pdf or json'
+    required: false
+    default: 'pdf'
+
+  create-zip:
+    description: 'Create ZIP archive of all evidence (paid tier only)'
+    required: false
+    default: 'false'
+
+  license-key:
+    description: 'License key for paid features'
+    required: false
+
+outputs:
+  evidence-path:
+    description: 'Path to generated evidence files'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ github.token }}
+    AUDIT_EVIDENCE_LICENSE_KEY: ${{ inputs.license-key }}
+  args:
+    - '--standard'
+    - ${{ inputs.standard }}
+    - '--org'
+    - ${{ inputs.org }}
+    - '--repo'
+    - ${{ inputs.repo }}
+    - '--format'
+    - ${{ inputs.format }}
+    - '--output'
+    - '/github/workspace/audit-evidence'
+    - ${{ inputs.create-zip == 'true' && '--zip' || '' }}

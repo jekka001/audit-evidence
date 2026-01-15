@@ -1,0 +1,65 @@
+name: Generate SOC2 Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      org:
+        description: 'GitHub Organization'
+        required: true
+        type: string
+      repo:
+        description: 'Repository name (optional)'
+        required: false
+        type: string
+      format:
+        description: 'Output format'
+        required: false
+        default: 'pdf'
+        type: choice
+        options:
+          - pdf
+          - json
+
+  schedule:
+    # Run monthly on the 1st at midnight UTC
+    - cron: '0 0 1 * *'
+
+jobs:
+  generate-evidence:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build
+        run: mvn package -DskipTests -B
+
+      - name: Generate Evidence
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUDIT_EVIDENCE_LICENSE_KEY: ${{ secrets.AUDIT_EVIDENCE_LICENSE_KEY }}
+        run: |
+          java -jar target/audit-evidence-*.jar \
+            --standard SOC2 \
+            --org ${{ inputs.org || github.repository_owner }} \
+            --repo ${{ inputs.repo || '' }} \
+            --format ${{ inputs.format || 'pdf' }} \
+            --output ./audit-evidence
+
+      - name: Upload Evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc2-evidence-${{ github.run_number }}
+          path: audit-evidence/
+          retention-days: 90
